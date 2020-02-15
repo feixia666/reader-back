@@ -4,6 +4,7 @@ const { UPLOAD_PATH } = require('../utils/constant')
 const Result = require('../models/Result')
 const Book = require('../models/Book')
 const boom = require('boom')
+const { decoded } = require('../utils/index')
 
 const router = express.Router()
 
@@ -18,15 +19,17 @@ router.post(
       book
         .parse()
         .then(book => {
-          console.log(book, 'book')
           new Result(book, '电子书上传成功').success(res)
         })
         .catch(err => {
           next(boom.badImplementation(err))
         })
-      console.log(book)
     }
   }
 )
+
+router.post('/create', function(req, res, next) {
+  new Result('新增成功').success(res)
+})
 
 module.exports = router

@@ -1,6 +1,7 @@
 const { MIME_TYPE_EPUB, UPLOAD_URL, UPLOAD_PATH } = require('../utils/constant')
 const fs = require('fs')
 const Epub = require('../utils/epub')
+const path = require('path')
 const xml2js = require('xml2js').parseString
 
 class Book {
@@ -86,7 +87,7 @@ class Book {
           } else {
             this.title = title
             this.language = language || 'en'
-            this.creator = creator || creatorFileAs || 'unknown'
+            this.author = creator || creatorFileAs || 'unknown'
             this.publisher = publisher || 'unknown'
             this.rootFile = epub.rootFile
             const handleGetImage = (err, file, mimeType) => {
@@ -104,8 +105,9 @@ class Book {
             }
             try {
               this.unzip()
-              this.parseContents(epub).then(({ chapters }) => {
+              this.parseContents(epub).then(({ chapters, chapterTree }) => {
                 this.contents = chapters
+                this.contentsTree = chapterTree
                 epub.getImage(cover, handleGetImage)
               })
             } catch (err) {
@@ -168,6 +170,7 @@ class Book {
     if (fs.existsSync(ncxFilePath)) {
       return new Promise((resolve, reject) => {
         const xml = fs.readFileSync(ncxFilePath, 'utf-8')
+        const dir = path.dirname(ncxFilePath).replace(UPLOAD_PATH, '')
         const fileName = this.fileName
         xml2js(xml, { explicitArray: false, ignoreAttrs: false }, function(
           err,
@@ -181,30 +184,29 @@ class Book {
               navMap.navPoint = findParent(navMap.navPoint)
               const newNavMap = flatten(navMap.navPoint)
               const chapters = []
-              epub.flow.forEach((chapter, index) => {
-                if (index + 1 > newNavMap.length) {
-                  return
-                }
-                const nav = newNavMap[index]
-                chapter.text = `${UPLOAD_URL}/unzip/${fileName}/${chapter.href}`
-                if (nav && nav.navLabel) {
-                  chapter.label = nav.navLabel.text || ''
-                } else {
-                  chapter.label = ''
-                }
-                chapter.level = nav.level
-                chapter.pid = nav.pid
-                chapter.navId = nav['$'].id
+              newNavMap.forEach((chapter, index) => {
+                const src = chapter.content['$'].src
+                chapter.text = `${UPLOAD_URL}${dir}/${src}`
+                chapter.label = chapter.navLabel.text || ''
+                chapter.navId = chapter['$'].id
                 chapter.fileName = fileName
                 chapter.order = index + 1
-                console.log(chapter)
                 chapters.push(chapter)
               })
-              resolve({ chapters })
+              const chapterTree = []
+              chapters.forEach(c => {
+                c.children = []
+                if (c.pid === '') {
+                  chapterTree.push(c)
+                } else {
+                  const parent = chapters.find(_ => _.navId === c.pid)
+                  parent.children.push(c)
+                }
+              })
+              resolve({ chapters, chapterTree })
             } else {
               reject(new Error('目录解析失败，或目录数为0'))
             }
-            console.log(navMap, 'json1111----')
           }
         })
       })
