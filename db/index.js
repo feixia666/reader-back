@@ -65,13 +65,15 @@ function insert(model, tableName) {
         const keysString = keys.join(',')
         const valuesString = values.join(',')
         sql = `${sql}${keysString}) VALUES (${valuesString})`
-        console.log(sql)
         const conn = connect()
         try {
+          console.log('query---')
           conn.query(sql, (err, result) => {
             if (err) {
+              console.log('errrrrr11')
               reject(err)
             } else {
+              console.log('quert++++')
               resolve(result)
             }
           })
@@ -81,7 +83,7 @@ function insert(model, tableName) {
           conn.end()
         }
       } else {
-        reject(new Error('插入数据库失败，对象不合法'))
+        reject(new Error('插入数据库失败，对象中没有任何属性'))
       }
     }
   })

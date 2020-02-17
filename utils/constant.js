@@ -1,4 +1,5 @@
 const UPLOAD_PATH = 'D:/nginx-1.17.8/upload/upload-ebook'
+const OLD_UPLOAD_URL = 'http://localhost:8089/res/img'
 const UPLOAD_URL = 'http://localhost:8089/upload-ebook'
 
 module.exports = {
@@ -9,6 +10,7 @@ module.exports = {
   PRIVATE_KEY: 'haiming',
   JWT_EXPIRED: 60 * 30,
   UPLOAD_PATH,
+  OLD_UPLOAD_URL,
   UPLOAD_URL,
   MIME_TYPE_EPUB: 'application/epub+zip'
 }

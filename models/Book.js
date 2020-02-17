@@ -1,4 +1,9 @@
-const { MIME_TYPE_EPUB, UPLOAD_URL, UPLOAD_PATH } = require('../utils/constant')
+const {
+  MIME_TYPE_EPUB,
+  UPLOAD_URL,
+  UPLOAD_PATH,
+  OLD_UPLOAD_URL
+} = require('../utils/constant')
 const fs = require('fs')
 const Epub = require('../utils/epub')
 const path = require('path')
@@ -193,6 +198,7 @@ class Book {
         const xml = fs.readFileSync(ncxFilePath, 'utf-8')
         const dir = path.dirname(ncxFilePath).replace(UPLOAD_PATH, '')
         const fileName = this.fileName
+        const unzipPath = this.unzipPath
         xml2js(xml, { explicitArray: false, ignoreAttrs: false }, function(
           err,
           json
@@ -207,6 +213,8 @@ class Book {
               const chapters = []
               newNavMap.forEach((chapter, index) => {
                 const src = chapter.content['$'].src
+                chapter.id = `${src}`
+                chapter.href = `${dir}/${src}`.replace(unzipPath, '')
                 chapter.text = `${UPLOAD_URL}${dir}/${src}`
                 chapter.label = chapter.navLabel.text || ''
                 chapter.navId = chapter['$'].id
@@ -259,11 +267,61 @@ class Book {
     }
   }
 
+  getContents() {
+    return this.contents
+  }
+
+  reset() {
+    console.log(this.fileName)
+    if (Book.pathExists(this.filePath)) {
+      fs.unlinkSync(Book.genPath(this.filePath))
+    }
+    if (Book.pathExists(this.coverPath)) {
+      fs.unlinkSync(Book.genPath(this.coverPath))
+    }
+    if (Book.pathExists(this.unzipPath)) {
+      fs.rmdirSync(Book.genPath(this.unzipPath), { recursive: true })
+    }
+  }
+
   static genPath(path) {
     if (!path.startsWith('/')) {
       path = `/${path}`
     }
     return `${UPLOAD_PATH}${path}`
+  }
+
+  static pathExists(path) {
+    if (path.startsWith(UPLOAD_PATH)) {
+      return fs.existsSync(path)
+    } else {
+      return fs.existsSync(Book.genPath(path))
+    }
+  }
+
+  static genCoverUrl(book) {
+    const { cover } = book
+    if (+book.updateType === 0) {
+      if (cover) {
+        if (cover.startsWith('/')) {
+          return `${OLD_UPLOAD_URL}${cover}`
+        } else {
+          return `${OLD_UPLOAD_URL}/${cover}`
+        }
+      } else {
+        return null
+      }
+    } else {
+      if (cover) {
+        if (cover.startsWith('/')) {
+          return `${UPLOAD_URL}${cover}`
+        } else {
+          return `${UPLOAD_URL}/${cover}`
+        }
+      } else {
+        return null
+      }
+    }
   }
 }
 
