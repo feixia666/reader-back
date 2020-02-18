@@ -29,6 +29,7 @@ async function insertContents(book) {
         'fileName',
         'id',
         'href',
+        'text',
         'order',
         'level',
         'label',
@@ -45,15 +46,11 @@ function insertBook(book) {
     try {
       if (book instanceof Book) {
         const result = await exists(book)
-        console.log(result, 'resultttt')
         if (result) {
-          console.log('remmmmm')
           await removeBook(book)
           reject(new Error('电子书已存在'))
         } else {
-          console.log('insert---')
           await db.insert(book.toDb(), 'book')
-          console.log('insert to book ok')
           await insertContents(book)
           resolve()
         }
@@ -66,20 +63,62 @@ function insertBook(book) {
   })
 }
 
+function updateBook(book) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (book instanceof Book) {
+        const result = await getBook(book.fileName)
+        if (result) {
+          const model = book.toDb()
+          if (+result.updateType === 0) {
+            reject(new Error('内置图书不能被编辑'))
+          } else {
+            await db.update(model, 'book', `where fileName='${book.fileName}'`)
+            resolve()
+          }
+        }
+      } else {
+        reject(new Error('添加的图书对象不合法'))
+      }
+    } catch (e) {
+      reject(e)
+    }
+  })
+}
+
 function getBook(fileName) {
   return new Promise(async (resolve, reject) => {
     const bookSql = `select * from book where fileName='${fileName}'`
     const contentsSql = `select * from contents where fileName='${fileName}' order by \`order\``
     const book = await db.queryOne(bookSql)
-    const contents = await db.queryOne(contentsSql)
+    const contents = await db.querySql(contentsSql)
     if (book) {
       book.cover = Book.genCoverUrl(book)
+      book.contentsTree = Book.genContentsTree(contents)
+      resolve(book)
+    } else {
+      reject(new Error('电子书不存在'))
     }
-    resolve(book)
   })
+}
+
+async function getCategory() {
+  const sql = 'select * from category order by category asc'
+  const result = await db.querySql(sql)
+  const categoryList = []
+  result.forEach(item => {
+    categoryList.push({
+      label: item.categoryText,
+      value: item.category,
+      num: item.num
+    })
+  })
+  return categoryList
 }
 
 module.exports = {
   insertBook,
-  getBook
+  updateBook,
+  getBook,
+  getCategory
 }

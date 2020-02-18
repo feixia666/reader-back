@@ -20,7 +20,7 @@ router.post(
       book
         .parse()
         .then(book => {
-          new Result(book, '电子书上传成功').success(res)
+          new Result(book, '电子书更新成功').success(res)
         })
         .catch(err => {
           next(boom.badImplementation(err))
@@ -45,6 +45,22 @@ router.post('/create', function(req, res, next) {
     })
 })
 
+router.post('/update', function(req, res, next) {
+  const decode = decoded(req)
+  if (decode && decode.username) {
+    req.body.username = decode.username
+  }
+  const book = new Book(null, req.body)
+  bookService
+    .updateBook(book)
+    .then(() => {
+      new Result('添加电子书成功').success(res)
+    })
+    .catch(err => {
+      next(boom.badImplementation(err))
+    })
+})
+
 router.get('/book', function(req, res, next) {
   const { fileName } = req.query
   if (!fileName) {
@@ -59,6 +75,17 @@ router.get('/book', function(req, res, next) {
         next(boom.badImplementation(err))
       })
   }
+})
+
+router.get('/category', function(req, res, next) {
+  bookService
+    .getCategory()
+    .then(category => {
+      new Result(category, '获取分类成功').success(res)
+    })
+    .catch(err => {
+      next(boom.badImplementation(err))
+    })
 })
 
 module.exports = router

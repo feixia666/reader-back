@@ -222,16 +222,8 @@ class Book {
                 chapter.order = index + 1
                 chapters.push(chapter)
               })
-              const chapterTree = []
-              chapters.forEach(c => {
-                c.children = []
-                if (c.pid === '') {
-                  chapterTree.push(c)
-                } else {
-                  const parent = chapters.find(_ => _.navId === c.pid)
-                  parent.children.push(c)
-                }
-              })
+              console.log(chapters, 'haiming0000')
+              const chapterTree = Book.genContentsTree(chapters)
               resolve({ chapters, chapterTree })
             } else {
               reject(new Error('目录解析失败，或目录数为0'))
@@ -321,6 +313,22 @@ class Book {
       } else {
         return null
       }
+    }
+  }
+
+  static genContentsTree(contents) {
+    if (contents) {
+      const contentsTree = []
+      contents.forEach(c => {
+        c.children = []
+        if (c.pid === '') {
+          contentsTree.push(c)
+        } else {
+          const parent = contents.find(_ => _.navId === c.pid)
+          parent.children.push(c)
+        }
+      })
+      return contentsTree
     }
   }
 }
