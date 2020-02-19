@@ -88,4 +88,19 @@ router.get('/category', function(req, res, next) {
     })
 })
 
+router.get('/list', function(req, res, next) {
+  console.log(req.query, 'quert-----')
+  bookService
+    .getList(req.query)
+    .then(({ list, count, page, pageSize }) => {
+      new Result(
+        { list, count, page: +page, pageSize: +pageSize },
+        '获取图书列表成功'
+      ).success(res)
+    })
+    .catch(err => {
+      next(boom.badImplementation(err))
+    })
+})
+
 module.exports = router

@@ -116,9 +116,39 @@ async function getCategory() {
   return categoryList
 }
 
+async function getList(query) {
+  console.log(query, 'quuuuuu')
+  const { category, author, title, sort, page = 1, pageSize = 20 } = query
+  const offset = (page - 1) * pageSize
+  let bookSql = 'select * from book'
+  let where = 'where'
+  title && (where = db.andLike(where, 'title', title))
+  author && (where = db.andLike(where, 'author', author))
+  category && (where = db.and(where, 'category', category))
+  if (where !== 'where') {
+    bookSql = `${bookSql} ${where}`
+  }
+  if (sort) {
+    const symbol = sort[0]
+    const column = sort.slice(1, sort.length)
+    const order = symbol === '+' ? 'asc' : 'desc'
+    bookSql = `${bookSql} order by \`${column}\` ${order}`
+  }
+  let countSql = `select count(*) as count from book`
+  if (where !== 'where') {
+    countSql = `${countSql} ${where}`
+  }
+  const count = await db.querySql(countSql)
+  bookSql = `${bookSql} limit ${pageSize} offset ${offset}`
+  const list = await db.querySql(bookSql)
+  list.forEach(book => (book.cover = Book.genCoverUrl(book)))
+  return { list, count: count[0].count, page, pageSize }
+}
+
 module.exports = {
   insertBook,
   updateBook,
   getBook,
-  getCategory
+  getCategory,
+  getList
 }

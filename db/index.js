@@ -13,6 +13,7 @@ function connect() {
 }
 
 function querySql(sql) {
+  console.log(sql)
   const conn = connect()
   return new Promise((resolve, reject) => {
     try {
@@ -67,13 +68,11 @@ function insert(model, tableName) {
         sql = `${sql}${keysString}) VALUES (${valuesString})`
         const conn = connect()
         try {
-          console.log('query---')
           conn.query(sql, (err, result) => {
             if (err) {
               console.log('errrrrr11')
               reject(err)
             } else {
-              console.log('quert++++')
               resolve(result)
             }
           })
@@ -124,10 +123,28 @@ function getCategory() {
   return new Promise((resolve, reject, next) => {})
 }
 
+function and(where, k, v) {
+  if (where === 'where') {
+    return `${where} \`${k}\`='${v}'`
+  } else {
+    return `${where} and \`${k}\`='${v}'`
+  }
+}
+
+function andLike(where, k, v) {
+  if (where === 'where') {
+    return `${where} \`${k}\` like '%${v}%'`
+  } else {
+    return `${where} and \`${k}\` like '%${v}%'`
+  }
+}
+
 module.exports = {
   querySql,
   queryOne,
   insert,
   update,
-  getCategory
+  getCategory,
+  and,
+  andLike
 }
