@@ -103,4 +103,16 @@ router.get('/list', function(req, res, next) {
     })
 })
 
+router.get('/delete', function(req, res, next) {
+  const { fileName } = req.query
+  bookService
+    .deleteBook(fileName)
+    .then(() => {
+      new Result('删除图书成功').success(res)
+    })
+    .catch(err => {
+      next(boom.badImplementation(err))
+    })
+})
+
 module.exports = router
