@@ -8,7 +8,7 @@ module.exports = {
   CODE_TOKEN_EXPIRED: -2,
   PWD_SALT: 'admin_imooc_node',
   PRIVATE_KEY: 'haiming',
-  JWT_EXPIRED: 60 * 30,
+  JWT_EXPIRED: 60 * 60,
   UPLOAD_PATH,
   OLD_UPLOAD_URL,
   UPLOAD_URL,
